@@ -28,11 +28,10 @@ class PagemanagerServiceProvider extends ServiceProvider {
 	 */
 	public function register()
 	{
-
-        \App::singleton('pagemanager', function()
-		{
-		    return new Pagemanager;
-		});
+		$this->app->singleton('pagemanager', function()
+        {
+            return new Pagemanager;
+        });
 	}
 
 	/**

@@ -1,5 +1,6 @@
 <?php namespace Marvin85\Pagemanager;
 
+use Illuminate\Support\Facades\URL as URL;
 
 class Pagemanager {
 
@@ -337,7 +338,7 @@ class Pagemanager {
 							$content = $this->locale;
 						break;
 						case '%CURRENTURL%':
-							$content = \URL::current();
+							$content = URL::current();
 						break;
 					}
 				}

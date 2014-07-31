@@ -1,4 +1,4 @@
-T License (MIT)
+MIT License (MIT)
 
 Copyright (c) 2014 Marvin Schröder
 
