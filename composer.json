@@ -1,10 +1,15 @@
 {
     "name": "marvin85/pagemanager",
+    "keywords": ["laravel","html","meta-tags","assets"],
+    "homepage": "https://github.com/marvin85/laravel-pagemanager",
+    "license": "MIT",
     "description": "Manage and render all meta-tags in your <head>..</head> section and include assets (css/js) as well as style/script sections.",
     "authors": [
         {
             "name": "Marvin Schröder",
-            "email": "schroeder@mediameets.de"
+            "email": "schroeder@mediameets.de",
+            "homepage": "http://www.mediameets.de",
+            "role": "Developer"
         }
     ],
     "require": {
@@ -13,12 +18,8 @@
         "illuminate/routing": "4.1.*"
     },
     "autoload": {
-        "classmap": [
-            "src/migrations"
-        ],
         "psr-0": {
             "Marvin85\\Pagemanager\\": "src/"
         }
-    },
-    "minimum-stability": "stable"
+    }
 }
