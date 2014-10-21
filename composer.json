@@ -1,7 +1,7 @@
 {
     "name": "marvin85/pagemanager",
     "keywords": ["laravel","html","meta-tags","assets"],
-    "homepage": "https://github.com/marvin85/laravel-pagemanager",
+    "homepage": "https://github.com/marvinschroeder/laravel-pagemanager",
     "license": "MIT",
     "description": "Manage and render all meta-tags in your <head>..</head> section and include assets (css/js) as well as style/script sections.",
     "authors": [
