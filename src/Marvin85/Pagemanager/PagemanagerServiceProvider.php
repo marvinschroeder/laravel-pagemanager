@@ -32,6 +32,12 @@ class PagemanagerServiceProvider extends ServiceProvider {
         {
             return new Pagemanager;
         });
+
+        \Event::listen('composing: *', function($view)
+		{
+			$pm = \App::make('pagemanager');
+		    $pm->addBodyClass($view->getName());
+		});
 	}
 
 	/**

@@ -1,8 +1,12 @@
 <?php namespace Marvin85\Pagemanager;
 
 use Illuminate\Support\Facades\URL as URL;
+use Illuminate\Support\Facades\HTML as HTML;
+use Illuminate\Support\Str as Str;
 
 class Pagemanager {
+
+	protected $bodyClass = array();
 
 	/**
 	 * css files to include
@@ -34,6 +38,8 @@ class Pagemanager {
 	 */
 	protected $favicon = null;
 
+	protected $canonical = null;
+
 	/**
 	 * url of the apple touch icon
 	 * @var string
@@ -59,6 +65,22 @@ class Pagemanager {
 	protected $meta = null;
 
 	/**
+	 * open graph properties to include
+	 * @var array
+	 */
+	protected $og = null;
+
+	protected $facebook_sdk = null;
+
+	protected $twitter_sdk = null;
+
+	protected $youtube_sdk = null;
+
+	protected $google_plus_sdk = null;
+
+	protected $breadcrumb = null;
+
+	/**
 	 * the default title
 	 * @var string
 	 */
@@ -77,6 +99,12 @@ class Pagemanager {
 	protected $title = null;
 
 	/**
+	 * the current document description
+	 * @var string
+	 */
+	protected $description = null;
+
+	/**
 	 * the locale to use as ISO 639 (de_DE, en_US..)
 	 * @var string
 	 */
@@ -88,14 +116,36 @@ class Pagemanager {
 	const LOCALE = 'en_US';
 
 	/**
+	 * possible meta types
+	 * @var array
+	 */
+	protected $metaTypes = array('name', 'property', 'http-equiv');
+
+	/**
 	 * allowed meta properties with optional default values
 	 * @var array
 	 */
 	protected $defaultMetaProperties = array(
-		'http-equiv' => array('X-UA-Compatible' => 'IE=edge'),
-		'name' =>  array('viewport' => 'width=device-width, initial-scale=1', 'msapplication-config' => 'none', 'robots' => 'index,follow'),
-		'property' => array('og:title' => '%TITLE%', 'og:url' => '%CURRENTURL%', 'og:type' => 'website', 'og:locale' => '%LOCALE%', 'og:description' => null)
+		'name' =>  array('viewport' => 'width=device-width, initial-scale=1', 'robots' => 'index,follow')
 	);
+
+	/**
+	 * default opengraph tag values
+	 * @var array
+	 */
+	protected $openGraphDefaults = array('og:title' => '%TITLE%', 'og:url' => '%CURRENTURL%', 'og:type' => 'website', 'og:locale' => '%LOCALE%', 'og:description' => '%DESCRIPTION%');
+
+	/**
+	 * opengraph tags to override when defined multiple times
+	 * @var array
+	 */
+	protected $openGraphSingleProperties = array('title', 'url', 'type', 'locale', 'description', 'site_name');
+
+	/**
+	 * open graph standard properties prefixable with og:
+	 * @var array
+	 */
+	protected $openGraphStandardProperties = array('title', 'url', 'type', 'locale', 'description', 'site_name', 'image');
 
 	/**
 	 * language texts
@@ -111,6 +161,31 @@ class Pagemanager {
 			'noTitle' => 'WARNING: No (default) page title defined'
 		)
 	);
+
+	protected $pageTitle = null;
+
+	public function pageTitle($str = null)
+	{
+		$this->pageTitle = $str;
+		return $this;
+	}
+
+	public function getPageTitle($wrap = null)
+	{
+		$wrap_str = (!is_null($wrap)) ? array('<'.$wrap.'>', '</'.$wrap.'>') : array('', '');
+		return (!is_null($this->pageTitle)) ? $wrap_str[0].$this->pageTitle.$wrap_str[1] : '';
+	}
+
+	public function addCrumb($title, $url = null)
+	{
+		$this->breadcrumb[] = array($title, $url);
+		return $this;
+	}
+
+	public function getBreadcrumb()
+	{
+		return $this->breadcrumb;
+	}
 		
 	/**
 	 * setting the default title, when no title is specified
@@ -145,18 +220,178 @@ class Pagemanager {
 		return $this;
 	}
 
+	public function addBodyClass($class)
+	{
+		$this->bodyClass[] = Str::slug(str_replace('.', '-', $class));
+		return $this;
+	}
+
+	public function getBodyClass()
+	{
+		if (!empty($this->bodyClass)) {
+			foreach (array_unique($this->bodyClass) as $class) {
+				$classes[] = 'has-'.$class;
+			}
+		}
+		return (isset($classes)) ? ' class="'.implode(' ', $classes).'"' : '';
+	}
+
+	/**
+	 * set the description
+	 * @param  string $str the description string
+	 * @return Pagemanager     pagemanager instance
+	 */
+	public function description($str)
+	{
+		$this->description = $str;
+		$this->meta('description', $str);
+		return $this;
+	}
+
+	public function addFacebookSdk($opts = array())
+	{
+		if (isset($opts['appId'])) {
+			if (!isset($opts['version'])) $opts['version'] = 'v2.0';
+			$this->facebook_sdk = $opts;
+		}
+		return $this;
+	}
+
+	public function addTwitterSdk()
+	{
+		$this->twitter_sdk = true;
+		return $this;
+	}
+
+	public function addYoutubeSdk()
+	{
+		$this->youtube_sdk = true;
+		return $this;
+	}
+
+	public function addGooglePlusSdk()
+	{
+		$this->google_plus_sdk = true;
+		return $this;
+	}
+
+	/**
+	 * set an open graph tag
+	 * @param  string $key tag name
+	 * @param  string|array $val value of the tag
+	 * @return Pagemanager      pagemanager instance
+	 */
+	public function og($key, $val)
+	{
+		$work_key = (in_array($key, $this->openGraphStandardProperties)) ? 'og:'.$key : $key;
+		if (in_array($key, $this->openGraphSingleProperties)) $this->ogForget($work_key);
+		$this->og[] = array($work_key, $val);
+		
+		return $this;
+	}
+
+	/**
+	 * remove an open graph tag
+	 * @param  string $key tag name
+	 * @return void      
+	 */
+	protected function ogForget($key)
+	{
+		if (!is_null($this->og)) {
+			foreach ($this->og as $index => $tag) {
+				if ($tag[0] == $key) unset($this->og[$index]);
+			}
+		}
+	}
+
+	/**
+	 * renders the open graph tags
+	 * @return html open graph tag code
+	 */
+	protected function renderOgTags()
+	{
+		if (!is_null($this->og)) {
+			foreach ($this->og as $index => $tag) {
+				switch ($tag[0]) {
+					case 'og:image':
+						if (is_array($tag[1])) {
+							$tags[] = array('og:image:url', $tag[1]['url']);
+							if (isset($tag[1]['secure_url'])) $tags[] = array('og:image:secure_url', $tag[1]['secure_url']);
+							if (isset($tag[1]['type'])) $tags[] = array('og:image:type', $tag[1]['type']);
+							if (isset($tag[1]['width'])) $tags[] = array('og:image:width', $tag[1]['width']);
+							if (isset($tag[1]['height'])) $tags[] = array('og:image:height', $tag[1]['height']);
+						} else {
+							$tags[] = array($tag[0], $tag[1]);
+						}
+					break;
+					default:
+						$tags[] = array($tag[0], $tag[1]);
+					break;
+				}
+			}
+		}
+
+		foreach ($this->openGraphDefaults as $key => $default_val) {
+			unset($matched_index);
+			$set_default_value = $found = false;
+
+			if (isset($tags)) {
+				foreach ($tags as $index => $tag) {
+					if ($tag[0] == $key) {
+						$found = true;
+						if(is_string($tag[1]) and trim($tag[1]) == ''){
+							$set_default_value = true;
+							$matched_index = $index;
+						}
+					}
+				}
+			}
+
+			if (!$found or $set_default_value) {
+				if (isset($matched_index)) {
+					$tags[$matched_index] = array($key, $this->replaceTemplate($default_val));
+				} else {
+					$tags[] = array($key, $this->replaceTemplate($default_val));
+				}
+			}
+		}
+			
+		if (isset($tags)) {
+			foreach ($tags as $tag) {
+				if (trim($tag[1]) != '') {
+					$html[] = '<meta property="'.$tag[0].'" content="'.$this->replaceTemplate($tag[1]).'" />';
+				}
+			}
+		}
+
+		return (isset($html)) ? implode(PHP_EOL, $html) : null;
+	}
+
+	/**
+	 * replace template value
+	 * @param  string $str to search in
+	 * @return string      the replaced string
+	 */
+	protected function replaceTemplate($str)
+	{
+		$search = array('%TITLE%', '%LOCALE%', '%CURRENTURL%', '%DESCRIPTION%');
+		$replace = array($this->getTitle(), $this->locale, URL::current(), $this->description);
+		return str_replace($search, $replace, $str);
+	}
+
 	/**
 	 * set a meta property
 	 * @param  string $key of the meta property
 	 * @param  string $val of the meta property
 	 * @return Pagemanager      pagemanager instance
 	 */
-	public function meta($key, $val = null)
+	public function meta($key, $val = null, $type = 'name') 
 	{
-		if (is_null($val) and isset($this->meta[$key])){
-			unset($this->meta[$key]);
+		if (!in_array($type, $this->metaTypes)) return $this;
+		if (is_null($val) and isset($this->meta[$type][$key])){
+			unset($this->meta[$type][$key]);
 		} else {
-			$this->meta[$key] = $val;
+			$this->meta[$type][$key] = $val;
 		}
 		return $this;
 	}
@@ -199,9 +434,11 @@ class Pagemanager {
 	 * @param  string $file path to the file
 	 * @return Pagemanager      pagemanager instance
 	 */
-	public function cssFile($file)
+	public function cssFile($file, $opts = array())
 	{
-		$this->cssFiles[] = $file;
+		$default_opts = array('index' => 0);
+		$opts = array_merge($default_opts, $opts);
+		$this->cssFiles[$opts['index']][] = array($file, $opts);
 		return $this;
 	}
 
@@ -216,15 +453,31 @@ class Pagemanager {
 		return $this;
 	}
 
-	public function jsFile($file, $position = 'footer')
+	/**
+	 * add a js file in the given position
+	 * @param  string $file     the file url
+	 * @param  string $position the position to place the url
+	 * @return Pagemanager           pagemanager instance
+	 */
+	public function jsFile($file, $position = 'footer', $opts = array())
 	{
-		$this->jsFiles[$position][] = $file;
+		$default_opts = array('index' => 0);
+		$opts = array_merge($default_opts, $opts);
+		$this->jsFiles[$position][$opts['index']][] = array($file, $opts);
 		return $this;
 	}
 
-	public function js($code, $position = 'footer')
+	/**
+	 * add js code in the given position
+	 * @param  string $code     the code to add
+	 * @param  string $position the position to place the code
+	 * @return Pagemanager           pagemanager instance
+	 */
+	public function js($code, $position = 'footer', $opts = array())
 	{
-		$this->js[$position][] = $code;
+		$default_opts = array('jquery' => true, 'index' => 0);
+		$opts = array_merge($default_opts, $opts);
+		$this->js[$position][$opts['index']][] = array($code, $opts);
 		return $this;
 	}
 
@@ -236,6 +489,12 @@ class Pagemanager {
 	public function favicon($file)
 	{
 		$this->favicon = $file;
+		return $this;
+	}
+
+	public function canonical($url)
+	{
+		$this->canonical = $url;
 		return $this;
 	}
 
@@ -323,43 +582,31 @@ class Pagemanager {
 	 */
 	public function getMetaProperties()
 	{
-		$meta = (!is_null($this->meta)) ? $this->meta : null;
-		foreach ($this->defaultMetaProperties as $type => $properties) {
-			foreach ($properties as $key => $content) {
-				if (isset($meta[$key])) {
-					$content = $meta[$key];
-					unset($meta[$key]);
-				} else {
-					switch($content) {
-						case '%TITLE%':
-							$content = $this->getTitle();
-						break;
-						case '%LOCALE%':
-							$content = $this->locale;
-						break;
-						case '%CURRENTURL%':
-							$content = URL::current();
-						break;
+		if (!is_null($this->defaultMetaProperties)) {
+			foreach ($this->defaultMetaProperties as $type => $tags) {
+				foreach ($tags as $key => $content) {
+					if (!isset($this->meta[$type][$key]) or trim($this->meta[$type][$key]) == '') {
+						$this->meta[$type][$key] = $content;
 					}
-				}
-				if (trim($content) != '') {
-					$html[] = '<meta '.$type.'="'.$key.'" content="'.$content.'" />';
 				}
 			}
 		}
-		return (isset($html)) ? implode($html) : null;
+
+		if (!is_null($this->meta)) {
+			foreach ($this->meta as $type => $tags) {
+				foreach ($tags as $key => $content) {
+					$content = $this->replaceTemplate($content);
+					if (trim($content) != '') {
+						$html[] = '<meta '.$type.'="'.$key.'" content="'.$content.'" />';
+					}
+				}
+			}
+		}
+
+		return (isset($html)) ? implode(PHP_EOL, $html) : null;
 	}
 
-	/**
-	 * prepare data before rendering
-	 * @param  string $position position which will be rendered
-	 * @return void           
-	 */
-	protected function prepare($position)
-	{
-		if (!is_null($this->cssFiles)) $this->cssFiles = array_unique($this->cssFiles);
-		if (!is_null($this->jsFiles[$position])) $this->jsFiles[$position] = array_unique($this->jsFiles[$position]);
-	}
+	
 
 	/**
 	 * render the html code for the given position
@@ -368,7 +615,6 @@ class Pagemanager {
 	 */
 	protected function render($position = 'head')
 	{
-		$this->prepare($position);
 
 		$html = null;
 
@@ -377,31 +623,93 @@ class Pagemanager {
 			$html[] = '<title>'.$this->getTitle().'</title>';
 
 			if ($this->html5Ie) {
-				$html[] = '<!--[if lt IE 9]><script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script><![endif]-->';
+				$html[] = '<!--[if lt IE 9]>'.PHP_EOL.HTML::script('//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js').'<![endif]-->';
 			}
 
 			if (!is_null($this->cssFiles)) {
-				foreach ($this->cssFiles as $file) {
-					$html[] = $this->getLinkTag('stylesheet', $file, 'text/css');
+				ksort($this->cssFiles, SORT_NUMERIC);
+
+				foreach ($this->cssFiles as $index => $items) {
+					foreach ($items as $item) {
+						$html[] = HTML::style($item[0]);
+					}
 				}
 			}
 			if (!is_null($this->css)) $html[] = '<style type="text/css">'.implode($this->css).'</style>';
 
 			if (!is_null($this->favicon)) $html[] = $this->getLinkTag('shortcut icon', $this->favicon, 'image/x-icon');
 			if (!is_null($this->appleTouchIcon)) $html[] = $this->getLinkTag('apple-touch-icon', $this->appleTouchIcon);
+			if (!is_null($this->canonical)) $html[] = $this->getLinkTag('canonical', $this->canonical);
 
 			$meta = $this->getMetaProperties();
 			if (!is_null($meta)) $html[] = $meta;
+			$og_tags = $this->renderOgTags();
+			if (!is_null($og_tags)) $html[] = $og_tags;
 		}
 
-		if (!is_null($this->jsFiles[$position]) and !is_null($this->jsFiles[$position])) {
-			foreach ($this->jsFiles[$position] as $file) {
-				$html[] = '<script src="'.$file.'"></script>';
+		if ($position == 'footer') {
+			if (!is_null($this->facebook_sdk)){
+				$html[] = '<div id="fb-root"></div>';
+				$this->js($this->getFacebookSdkCode(), 'footer', array('jquery' => false));
+			}
+			if (!is_null($this->twitter_sdk)){
+				$this->js($this->getTwitterSdkCode(), 'footer', array('jquery' => false));
+			}
+			if (!is_null($this->youtube_sdk) or !is_null($this->google_plus_sdk)){
+				$this->js($this->getGoogleSdkCode(), 'footer', array('jquery' => false));
 			}
 		}
 
-		if (!is_null($this->js[$position]) and !is_null($this->js[$position])) $html[] = '<script>'.implode($this->js[$position]).'</script>';
+		if (!is_null($this->jsFiles[$position])) {
+			
+			ksort($this->jsFiles[$position], SORT_NUMERIC);
+			foreach ($this->jsFiles[$position] as $index => $items) {
+				foreach ($items as $item) {
+					$html[] = HTML::script($item[0]);
+				}
+			}
+		}
 
-		return (!is_null($html)) ? implode($html)."\n" : null;
+		if (!is_null($this->js[$position])){
+			ksort($this->js[$position]);
+			foreach ($this->js[$position] as $index => $items) {
+				foreach ($items as $item) {
+					if (isset($item[1]['jquery']) and $item[1]['jquery']===true) {
+						$jquery_code[] = $item[0];
+					} else {
+						$js_code[] = $item[0];
+					}
+				}
+			}
+			if (isset($jquery_code)) $js_code[] = 'jQuery(document).ready(function($){ '.implode($jquery_code).' });';
+			$html[] = '<script>'.implode($js_code).'</script>';
+		}
+
+		return (!is_null($html)) ? implode($html) : null;
+	}
+
+	protected function getFacebookSdkCode()
+	{
+		return '(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/'.$this->locale.'/sdk.js#xfbml=1&appId='.$this->facebook_sdk['appId'].'&version='.$this->facebook_sdk['version'].'";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, "script", "facebook-jssdk"));';
+	}
+
+	protected function getTwitterSdkCode()
+	{
+		return '!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");';
+	}
+
+	protected function getGoogleSdkCode()
+	{
+		return '(function() {
+    var go = document.createElement("script"); go.type = "text/javascript"; go.async = true;
+    go.src = "//apis.google.com/js/platform.js";
+    var go_s = document.getElementsByTagName("script")[0]; go_s.parentNode.insertBefore(go, go_s);
+  })();';
 	}
 }
