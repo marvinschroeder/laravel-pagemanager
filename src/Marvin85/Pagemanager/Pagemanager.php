@@ -241,6 +241,7 @@ class Pagemanager {
 	 */
 	public function description($str)
 	{
+		$str = e($str);
 		$this->description = $str;
 		$this->meta('description', $str);
 		return $this;
@@ -617,7 +618,7 @@ class Pagemanager {
 
 		if ($position == 'head') {
 			$html[] = '<meta charset="'.$this->charset.'">';
-			$html[] = '<title>'.$this->getTitle().'</title>';
+			$html[] = '<title>'.e($this->getTitle()).'</title>';
 
 			if ($this->html5Ie) {
 				$html[] = '<!--[if lt IE 9]>'.PHP_EOL.HTML::script('//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js').'<![endif]-->';
