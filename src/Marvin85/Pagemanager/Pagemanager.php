@@ -153,12 +153,10 @@ class Pagemanager {
 	 */
 	protected $lang = array(
 		'de_DE' => array(
-			'browsehappy' => 'Du benutzt einen %sveralteten%s Browser. Bitte %saktualisiere Deinen Browser%s um alle Funktionen unserer Seite uneingeschränkt nutzen zu können.',
-			'noTitle' => 'WARNUNG: Kein Seitentitel definiert'
+			'browsehappy' => 'Du benutzt einen %sveralteten%s Browser. Bitte %saktualisiere Deinen Browser%s um alle Funktionen unserer Seite uneingeschränkt nutzen zu können.'
 		),
 		'en_US' => array(
-			'browsehappy' => 'You are using an %soutdated%s browser. Please %supgrade your browser%s to improve your experience.',
-			'noTitle' => 'WARNING: No (default) page title defined'
+			'browsehappy' => 'You are using an %soutdated%s browser. Please %supgrade your browser%s to improve your experience.'
 		)
 	);
 
@@ -548,17 +546,16 @@ class Pagemanager {
 	}
 
 	/**
-	 * get the defined title (with appended string) or default title or warning if none is defined
-	 * @return string the title
+	 * get the defined title (with appended string) or default title or null if none is defined
+	 * @return null | string the title
 	 */
-	protected function getTitle()
+	public function getTitle()
 	{
+		$title = null;
 		if(!is_null($this->title)){
 			$title = $this->title.((!is_null($this->appendTitle)) ? $this->appendTitle : '');
 		} else if (!is_null($this->defaultTitle)){
 			$title = $this->defaultTitle;
-		} else {
-			$title = '! '.$this->getLangText('noTitle').' !';
 		}
 		return $title;
 	}
