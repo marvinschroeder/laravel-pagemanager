@@ -313,7 +313,7 @@ class Pagemanager {
 				switch ($tag[0]) {
 					case 'og:image':
 						if (is_array($tag[1])) {
-							$tags[] = array('og:image:url', $tag[1]['url']);
+							$tags[] = array('og:image', $tag[1]['url']);
 							if (isset($tag[1]['secure_url'])) $tags[] = array('og:image:secure_url', $tag[1]['secure_url']);
 							if (isset($tag[1]['type'])) $tags[] = array('og:image:type', $tag[1]['type']);
 							if (isset($tag[1]['width'])) $tags[] = array('og:image:width', $tag[1]['width']);
