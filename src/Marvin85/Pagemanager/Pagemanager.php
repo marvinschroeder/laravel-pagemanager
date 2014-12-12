@@ -665,7 +665,7 @@ class Pagemanager {
 			ksort($this->jsFiles[$position], SORT_NUMERIC);
 			foreach ($this->jsFiles[$position] as $index => $items) {
 				foreach ($items as $item) {
-					if (in_array($item[0], $this->jsFilesLoaded)) {
+					if (!in_array($item[0], $this->jsFilesLoaded)) {
 						$html[] = HTML::script($item[0]);
 						$this->jsFilesLoaded[] = $item[0];
 					}
