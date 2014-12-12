@@ -7,6 +7,8 @@ use Illuminate\Support\Str as Str;
 class Pagemanager {
 
 	protected $bodyClass = array();
+	
+	protected $jsFilesLoaded = array();
 
 	/**
 	 * css files to include
@@ -663,7 +665,10 @@ class Pagemanager {
 			ksort($this->jsFiles[$position], SORT_NUMERIC);
 			foreach ($this->jsFiles[$position] as $index => $items) {
 				foreach ($items as $item) {
-					$html[] = HTML::script($item[0]);
+					if (in_array($item[0], $this->jsFilesLoaded)) {
+						$html[] = HTML::script($item[0]);
+						$this->jsFilesLoaded[] = $item[0];
+					}
 				}
 			}
 		}
