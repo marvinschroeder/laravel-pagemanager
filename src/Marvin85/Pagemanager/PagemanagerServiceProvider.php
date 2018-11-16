@@ -1,6 +1,8 @@
 <?php namespace Marvin85\Pagemanager;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Event as Event;
+use Illuminate\Support\Facades\App as App;
 
 class PagemanagerServiceProvider extends ServiceProvider {
 
@@ -33,9 +35,9 @@ class PagemanagerServiceProvider extends ServiceProvider {
             return new Pagemanager;
         });
 
-        \Event::listen('composing: *', function($view)
+        Event::listen('composing: *', function($view)
 		{
-			$pm = \App::make('pagemanager');
+			$pm = App::make('pagemanager');
 		    $pm->addBodyClass($view->getName());
 		});
 	}
