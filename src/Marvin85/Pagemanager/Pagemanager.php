@@ -186,7 +186,7 @@ class Pagemanager {
 	{
 		return $this->breadcrumb;
 	}
-		
+
 	/**
 	 * setting the default title, when no title is specified
 	 * @param  string $str the default title string
@@ -287,14 +287,14 @@ class Pagemanager {
 		$work_key = (in_array($key, $this->openGraphStandardProperties)) ? 'og:'.$key : $key;
 		if (in_array($key, $this->openGraphSingleProperties)) $this->ogForget($work_key);
 		$this->og[] = array($work_key, $val);
-		
+
 		return $this;
 	}
 
 	/**
 	 * remove an open graph tag
 	 * @param  string $key tag name
-	 * @return void      
+	 * @return void
 	 */
 	protected function ogForget($key)
 	{
@@ -307,7 +307,7 @@ class Pagemanager {
 
 	/**
 	 * renders the open graph tags
-	 * @return html open graph tag code
+	 * @return string html open graph tag code
 	 */
 	protected function renderOgTags()
 	{
@@ -356,7 +356,7 @@ class Pagemanager {
 				}
 			}
 		}
-			
+
 		if (isset($tags)) {
 			foreach ($tags as $tag) {
 				if (trim($tag[1]) != '') {
@@ -380,13 +380,14 @@ class Pagemanager {
 		return str_replace($search, $replace, $str);
 	}
 
-	/**
-	 * set a meta property
-	 * @param  string $key of the meta property
-	 * @param  string $val of the meta property
-	 * @return Pagemanager      pagemanager instance
-	 */
-	public function meta($key, $val = null, $type = 'name') 
+    /**
+     * set a meta property
+     * @param  string $key of the meta property
+     * @param  string $val of the meta property
+     * @param string $type
+     * @return Pagemanager      pagemanager instance
+     */
+	public function meta($key, $val = null, $type = 'name')
 	{
 		if (!in_array($type, $this->metaTypes)) return $this;
 		if (is_null($val) and isset($this->meta[$type][$key])){
@@ -429,12 +430,13 @@ class Pagemanager {
 		$this->html5Ie = (bool) $status;
 		return $this;
 	}
-	
-	/**
-	 * add a css file
-	 * @param  string $file path to the file
-	 * @return Pagemanager      pagemanager instance
-	 */
+
+    /**
+     * add a css file
+     * @param  string $file path to the file
+     * @param array $opts
+     * @return Pagemanager      pagemanager instance
+     */
 	public function cssFile($file, $opts = array())
 	{
 		$default_opts = array('index' => 0);
@@ -454,12 +456,13 @@ class Pagemanager {
 		return $this;
 	}
 
-	/**
-	 * add a js file in the given position
-	 * @param  string $file     the file url
-	 * @param  string $position the position to place the url
-	 * @return Pagemanager           pagemanager instance
-	 */
+    /**
+     * add a js file in the given position
+     * @param  string $file the file url
+     * @param  string $position the position to place the url
+     * @param array $opts
+     * @return Pagemanager           pagemanager instance
+     */
 	public function jsFile($file, $position = 'footer', $opts = array())
 	{
 		$default_opts = array('index' => 0);
@@ -468,12 +471,13 @@ class Pagemanager {
 		return $this;
 	}
 
-	/**
-	 * add js code in the given position
-	 * @param  string $code     the code to add
-	 * @param  string $position the position to place the code
-	 * @return Pagemanager           pagemanager instance
-	 */
+    /**
+     * add js code in the given position
+     * @param  string $code the code to add
+     * @param  string $position the position to place the code
+     * @param array $opts
+     * @return Pagemanager           pagemanager instance
+     */
 	public function js($code, $position = 'footer', $opts = array())
 	{
 		$default_opts = array('jquery' => true, 'index' => 0);
@@ -512,7 +516,7 @@ class Pagemanager {
 
 	/**
 	 * include browshappy notification for < IE 8
-	 * @return html the browsehappy notification code
+	 * @return string html the browsehappy notification code
 	 */
 	public function browseHappy()
 	{
@@ -522,7 +526,7 @@ class Pagemanager {
 
 	/**
 	 * Output code for head position
-	 * @return html the rendered code for <head>..</head>
+	 * @return string the rendered code for <head>..</head>
 	 */
 	public function head()
 	{
@@ -531,7 +535,7 @@ class Pagemanager {
 
 	/**
 	 * return code for footer position
-	 * @return html the rendered code before </body>
+	 * @return string the rendered code before </body>
 	 */
 	public function footer()
 	{
@@ -568,7 +572,7 @@ class Pagemanager {
 	 * @param  string $rel  the relation key
 	 * @param  string $href path to the resource
 	 * @param  string $type type of the resource
-	 * @return html       the link tag
+	 * @return string       the link tag
 	 */
 	protected function getLinkTag($rel, $href, $type = null)
 	{
@@ -578,7 +582,7 @@ class Pagemanager {
 
 	/**
 	 * get all <meta../> properties
-	 * @return html the meta code
+	 * @return string the meta code
 	 */
 	public function getMetaProperties()
 	{
@@ -606,12 +610,12 @@ class Pagemanager {
 		return (isset($html)) ? implode(PHP_EOL, $html) : null;
 	}
 
-	
+
 
 	/**
 	 * render the html code for the given position
 	 * @param  string $position to render
-	 * @return html           the rendered html code
+	 * @return string           the rendered html code
 	 */
 	protected function render($position = 'head')
 	{
@@ -661,7 +665,7 @@ class Pagemanager {
 		}
 
 		if (!is_null($this->jsFiles[$position])) {
-			
+
 			ksort($this->jsFiles[$position], SORT_NUMERIC);
 			foreach ($this->jsFiles[$position] as $index => $items) {
 				foreach ($items as $item) {
@@ -674,6 +678,7 @@ class Pagemanager {
 		}
 
 		if (!is_null($this->js[$position])){
+            $js_code = array();
 			ksort($this->js[$position]);
 			foreach ($this->js[$position] as $index => $items) {
 				foreach ($items as $item) {
